@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>websocket实时通讯</title>
+    <!-- <link href="./css/style.css" type="text/css" rel="stylesheet" /> -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        /*
+        var socket = io('http://localhost:8080');
+        socket.on('news', function (data) {
+            console.log(data);
+            socket.emit('my other event', {
+                my: 'data'
+            });
+        });
+    */
+
+    // 这边用的是websocket协议  ws
+    let socket=io && io.connect('ws://localhost:8081/');
+    let isConnect = false;
+    let oErrBox = document.getElementsByClassName('err_box')[0];
+    socket.on('connect', ()=>{
+      isConnect = true;
+      socket.on('online',str => {
+        const { online } = JSON.parse(JSON.stringify(str));
+        document.getElementById("online").innerText = online;
+      });
+      document.getElementsByClassName('err_box')[0].style.display='none';
+    });
+    socket.on('disconnect', ()=>{
+      isConnect = false;
+      document.getElementsByClassName('err_box')[0].style.display='block';
+    });
+
+    //聊天室
+    window.onload=function (){
+      let oTxt=document.getElementById('txt1');
+      let oBtn=document.getElementById('btn1');
+      let oUl=document.getElementById('ul1');
+      let oOnLine = document.getElementById("online");
+      oBtn.onclick=function (){
+        if(!isConnect) {
+          const errorText = document.getElementsByClassName('err_box')[0].innerText;
+          alert(errorText);
+          return
+        };
+        //发送消息 socket.emit()
+        const {value:text} = oTxt;
+        if(!text){
+          alert('内容不能为空!');
+          return;
+        }
+        // 发送 'msg' 消息名称
+        socket.emit('msg', text);
+        let oLi=document.createElement('li');
+        oLi.innerHTML="我:" + text;
+        oLi.className='me';
+        oTxt.value='';
+        oUl.appendChild(oLi);
+      };
+      //接收消息 'msg' 消息名称
+      socket.on('msg', str =>{
+        const { index,content,online,selfSock } = JSON.parse(JSON.stringify(str));
+        // 自己发的自己这边不要接收
+        if(selfSock) return;
+        let oLi=document.createElement('li');
+        oOnLine.innerText = online;
+        oLi.innerHTML=index + ":" + content;
+        oUl.appendChild(oLi);
+      });
+    };
+    </script>
+</head>
+
+<body>
+
+    <div id="ws-box">
+        <div class="err_box">
+            无法连接到服务器，请检查网络
+        </div>
+        <h2 class="title">websocket实时通讯</h2>
+        <p>当前在线人数:<span id="online">0</span></p>
+        <ul id="ul1" class="clearfix"></ul>
+        <textarea rows="4" cols="60" id="txt1"></textarea>
+        <input type="button" value="发送" id="btn1">
+    </div>
+</body>
+<style>
+    .clearfix {
+        *zoom: 1;
+    }
+
+    .clearfix:after {
+        height: 0;
+        line-height: 0;
+        visibility: hidden;
+        clear: both;
+        display: block;
+        content: ".";
+    }
+
+    ul,
+    ol,
+    li {
+        list-style: none;
+    }
+
+    #ws-box {
+        width: 400px;
+        margin: 0 auto;
+    }
+
+    .title {
+        text-align: center;
+    }
+
+    #ul1 {
+        width: 100%;
+        height: 300px;
+        border: 1px solid black;
+        overflow: auto;
+    }
+
+    #ul1 li.me {
+        margin-right: 10px;
+        color: green;
+        text-align: right;
+    }
+
+    .err_box {
+        width: 100%;
+        height: 20px;
+        line-height: 20px;
+        text-align: center;
+        color: red;
+        display: none
+    }
+
+    p {
+        text-align: center;
+    }
+
+    #online {
+        color: #f60;
+    }
+</style>
+
+</html>
