@@ -1,0 +1,261 @@
+websocket
+1.双向
+2.性能高
+
+--------------------------------------------------------------------------------
+
+socket 
+很早就有了 70年代Linux
+基于http的
+
+--------------------------------------------------------------------------------
+
+websocket => socket.io
+需要的模块
+http
+socket
+
+--------------------------------------------------------------------------------
+
+服务端：
+  sock.on('connection')  //连接
+  sock.on('disconnect')  //断开连接
+  let n = aSock.indexOf(sock)
+  if(n != -1){
+    aSock.splice(i,1)
+  }
+
+
+客户端：
+  连接 监听服务端的运行状态
+  sock.on('connect')    //与服务端成功连接
+  sock.on('disconnect') //与服务端断开连接
+
+script
+协议:'ws://localhost:8088/'
+
+聊天室
+A  =>  B
+B => C、D、E
+A:emit(msg,'msg') 
+let sock = io.connect('ws://localhost:8088/');
+
+B:
+on('msg')
+
+1.收发两边的消息名称可以一样
+2.不用返回给自己,返回给其他
+s != sock
+3自己发送出去的也要看得到
+增加一个ul li DOM
+
+4.断开的scoket 需要去掉
+
+5.如果服务端网络断了或者其他异常错误
+客户端要提示发送不出去
+
+error_box
+
+socket.io可以自动重连
+
+--------------------------------------------------------------------------------
+
+原生websocket：
+需要的模块
+http
+net //TCP 原生Socket 其他socket是基于这个封装的
+crypto 
+
+1.原生websocket不能跟http服务器连接，所以要使用net来跟原生websocket通信
+2.let server = net.createServer(sock => {console.log('连接')})
+无论什么服务器，都需要监听
+server.listen(8080)
+       
+
+--------------------------------------------------------------------------------
+
+WebSocket是前台的东西，是HTML5带的一种东西
+1.只有前台有才WebSocket这个东西
+2.后台没有，后台有原生Socket
+
+--------------------------------------------------------------------------------
+
+前端:
+连上了
+onopen
+
+有数据
+onmessage
+
+断开了
+onclose
+
+http数据
+密钥
+升级
+
+--------------------------------------------------------------------------------
+原始数据：
+GET / HTTP/1.1
+Host: localhost:8080
+Connection: Upgrade
+Pragma: no-cache
+Cache-Control: no-cache
+Upgrade: websocket
+Origin: file://
+Sec-WebSocket-Version: 13
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like
+Gecko) Chrome/65.0.3315.4 Safari/537.36
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,es;q=0.6,fr;q=0.5,pt;q=0.4
+Sec-WebSocket-Key: +0jgXtYyVeG28Gn1CLUKIg==
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+
+--------------------------------------------------------------------------------
+
+1.第一行删掉
+Host: localhost:8080
+Connection: Upgrade   //升级
+Pragma: no-cache
+Cache-Control: no-cache
+Upgrade: websocket   //协议 需要判断的
+Origin: file://
+Sec-WebSocket-Version: 13  //版本 需要判断的
+User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like
+Gecko) Chrome/65.0.3315.4 Safari/537.36
+Accept-Encoding: gzip, deflate, br
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,es;q=0.6,fr;q=0.5,pt;q=0.4
+Sec-WebSocket-Key: +0jgXtYyVeG28Gn1CLUKIg==
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+
+
+关掉协议
+sock.end()
+
+
+sock.write()
+
+\r\n 分隔换行
+
+once:只执行一次，后面不会再执行
+on: 一直执行
+先执行once，再执行on
+sock.once(
+   ...
+   sock.on(
+        ...
+  
+   )
+)
+
+websocket是长连接，连接成功后，就处于pedding状态。
+
+数据部分是最难处理的
+
+
+websocket在前台走的是应用层（http）
+在后端走的是传输层(TCP)
+
+websocket一开始就是13版本
+
+header头是键值对形式，不是Buffer形式，所以可以转换成string形式
+--------------------------------------------------------------------------------
+
+2.每行数据用": "切开
+
+--------------------------------------------------------------------------------
+
+sock.send
+
+
+--------------------------------------------------------------------------------
+数据帧：包、报、块、...
+结构化
+
+
+--------------------------------------------------------------------------------
+
+1位(bit)
+8位=>1字节(byte)
+
+--------------------------------------------------------------------------------
+
+81       9c       11       2d       f8       bd         数据.....
+10000001 10011100 00010001 00101101 11111000 10111101
+
+11 2d f8 bd
+6a 0f 96 dc 7c 48 da 87 33 40 8b da 33 01 da d9 70 59 99 9f 2b 76 c9 8f 3d 18 a5 c0
+
+
+
+1 000 0001   1 0011100 00010001 00101101 11111000 10111101
+F RSV opcode M payload masking-key
+I            A 28个字
+N            S
+             K
+
+
+28
+
+--------------------------------------------------------------------------------
+
+手写一个websocket
+1.解析位运算等
+2.密码学
+
+
+--------------------------------------------------------------------------------
+用WebSocket：
+1.socket.io
+2.原生WebSocket
+  i.net模块
+  ii.流程
+    a.握手
+      C(client):version:13、sec-websocket-key:xxxxx、sha1(key+mask)=>base64
+      S(server):101 Switching Protocols、sec-websocket-accept: base64
+      C <-> S
+
+      Client：
+      onopen
+      onmessage
+      onclose
+
+      Server:
+      net.createServer(sock=>{});
+      先sock.once('data', 握手);
+      后sock.on('data', 数据请求);放在once里面
+      sock.on('end');
+
+    b.数据帧解析
+
+-------------------------------------------------------------------------------
+
+位运算
+data[1]&0x0FE
+payload 长度
+
+音频 视频 图片 都能转换成base64
+--------------------------------------------------------------------------------
+
+ajax2.0
+formdata——模拟<form> 高级浏览器
+
+一般手机端都是高级浏览器
+
+PC端通过
+swf辅助完成——swfuploader
+
+
+1.模拟表单提交  
+let formData = new FormData();
+formData.set(key,value)  
+2.提交文件、监控上传进度
+
+--------------------------------------------------------------------------------
+
+ajax2.0：
+1.cors跨域
+2.formdata提交表单
+比如文件上传
+
+--------------------------------------------------------------------------------
